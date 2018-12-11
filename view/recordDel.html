@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" type='text/css' href="../css/general.css">
+  <link rel="stylesheet" type='text/css' href="../css/styles.css">
+</head>
+<body>
+  <div class="container-fluid mt-2 mb-3">
+    <p class="message mb-1">Delete selected record?</p>
+    <div></div>
+    <div class="align-right mt-2">
+      <button type="button" class="btn btn-sm btn-secondary" name="button" action="x_del">Cancel</button>
+      <button type="button" class="btn btn-sm btn-danger" name="button" action="del">Delete</button>
+    </div>
+
+  </div>
+
+  <script type="text/javascript">
+    window.$ = window.jQuery = require('jquery');
+
+    $(()=>{
+      const electron = require('electron')
+      const moment = require('moment')
+      const {ipcRenderer} = electron
+
+      ipcRenderer.on('log:w_del', (e, log)=>{
+        let {_doc} = log[0]
+
+        let start = moment.utc(_doc.time_in, "HH:mm");
+        let end = moment.utc(_doc.time_out, "HH:mm");
+        let duration = moment.duration(end.diff(start)).asHours().toFixed(2)
+
+        $(`p.message + div`).html(`
+          <id hidden>${_doc.id}</id>
+          <small class="blk"><strong>Name: </strong>${_doc.name}</small>
+          <small class="blk"><strong>Date: </strong>${_doc.date}</small>
+          <small class="blk"><strong>Time In: </strong>${_doc.time_in}</small>
+          <small class="blk"><strong>Time Out: </strong>${_doc.time_out}</small>
+          <small class="blk"><strong>Duration: </strong>${duration}</small>
+          <small class="blk"><strong>Location: </strong>${_doc.location}</small>
+          <small class="blk"><strong>Remarks: </strong>${_doc.remarks ? _doc.remarks : '-'}</small>`)
+      })
+
+      $(`button`).on('click', function(){
+        ipcRenderer.send(`log:${$(this).attr('action')}`, $(`id`).text())
+      })
+
+    });
+
+  </script>
+
+</body>
+</html>

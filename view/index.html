@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Time Log</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <link rel="stylesheet" type='text/css' href="../css/general.css">
+  <link rel="stylesheet" type='text/css' href="../css/styles.css">
+</head>
+<body>
+  <div class="container-fluid my-3">
+    <p>Time Log App</p>
+    <table id="log-table">
+      <thead>
+        <th></th>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Time In</th>
+        <th>Time Out</th>
+        <th class="duration-field">Duration</th>
+        <th>Location</th>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</body>
+
+<script type="text/javascript">
+  window.$ = window.jQuery = require('jquery');
+
+  $(()=>{
+    const electron = require('electron')
+    const moment = require('moment')
+    const {ipcRenderer} = electron
+
+    console.log(moment('2018-12-11').format('ll'))
+    console.log(moment("18:40", 'HH:mm').format('hh:mm A'))
+
+    // GET Log
+    $('#log-table tbody').html(`
+      <tr>
+        <td colspan='7'>Loading...</td>
+      </tr>`)
+
+    ipcRenderer.send('log:get')
+
+    ipcRenderer.on('log:get', (e, log)=>{
+      log[0] ?
+        $('#log-table tbody').html(``) :
+        $('#log-table tbody').html(`
+          <tr>
+            <td colspan='7'><em>No Records Found</em></td>
+          </tr>`)
+
+      log.forEach((data, i)=>{
+        let {_doc} = data
+
+        let start = moment.utc(_doc.time_in, "HH:mm");
+        let end = moment.utc(_doc.time_out, "HH:mm");
+        let duration = moment.duration(end.diff(start)).asHours().toFixed(2)
+
+        $('#log-table tbody').append(
+          `<tr>
+            <td>
+              <id hidden>${_doc.id}</id>
+              <i class="fas fa-edit mr-1" action="w_put"></i>
+              <i class="fas fa-trash-alt mr-1" action="w_del"></i>
+              <i class="fas fa-sticky-note" action="w_info"></i>
+            </td>
+            <td>${_doc.name}</td>
+            <td>${moment(_doc.date).format('ll')}</td>
+            <td>${moment(_doc.time_in,'HH:mm').format('hh:mm A')}</td>
+            <td class='pre-duration-field'>${moment(_doc.time_out,'HH:mm').format('hh:mm A')}</td>
+            <td class='duration-field'>${duration}</td>
+            <td>${_doc.location}</td>
+          </tr>`)
+      })
+
+      // PUT & DEL Pages
+      $(`#log-table i`).on('click', function(){
+        ipcRenderer.send(`log:${$(this).attr('action')}`, $(this).siblings(`id`).text())
+      })
+
+
+
+    })
+
+    ipcRenderer.on('log:getOne', (e, log)=>{
+
+    })
+
+  })
+</script>
+
+</html>
