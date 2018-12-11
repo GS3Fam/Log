@@ -1,2 +1,6 @@
 # Log
-Intern Time Log
+
+Instruction:
+
+    npm install
+    npm start
